@@ -45,7 +45,6 @@ const RulesLookup = () => {
     }
   };
 // ADD THIS LINE
-console.log("FULL DATA OBJECT:", selectedItem);
   return (
     <div className="flex flex-col gap-4 bg-stone-900/40 p-6 rounded-xl border border-amber-900/20 h-full min-h-[500px]">
       <div className="flex items-center justify-between gap-4">

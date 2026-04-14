@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserPlus, Sparkles, Trash2, Edit3, User, Loader2 } from 'lucide-react';
-import { generateAIGent, generateNPCPortrait}from '@/app/actions';
+import { generateAIGent, generateNPCPortrait } from '@/app/actions';
 
 const NPCManager = ({ npcs = [], onDelete, onEdit, npcToEdit, onStartEdit }: any) => {
   const [mode, setMode] = useState<'view' | 'manual'>('view');

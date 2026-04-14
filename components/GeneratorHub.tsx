@@ -1,3 +1,4 @@
+'use client'
 import React, { useState } from 'react';
 import { Sparkles, Coins, Map, Dice6, Loader2 } from 'lucide-react';
 import { generateAIGent } from '@/app/actions'; // Import our new brain

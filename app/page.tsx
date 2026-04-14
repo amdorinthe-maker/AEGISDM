@@ -11,6 +11,67 @@ import DiceRoller from '@/components/DiceRoller';
 import { useState, useEffect } from 'react';
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [locations, setLocations] = useState<any[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<any>(null);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [locationToEdit, setLocationToEdit] = useState<any>(null);
+  const [npcs, setNpcs] = useState<any[]>([]);
+  const [npcToEdit, setNpcToEdit] = useState<any>(null);
+
+function AddLocationModal({ isOpen, onClose, onSave, editData }: any) {
+  return (
+    <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className="bg-stone-900 border border-amber-500/30 rounded-lg w-full max-w-md shadow-2xl shadow-amber-900/20 overflow-hidden">
+        <div className="bg-gradient-to-r from-amber-900/20 to-stone-900 p-4 border-b border-amber-500/20">
+          <h2 className="text-lg font-bold text-amber-500">{editData ? 'Edit Location' : 'Add New Location')}</h2>
+        </div>
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+          onSave({
+            id: editData?.id || Date.now(),
+            name: formData.get('name') as string,
+            type: formData.get('type') as string,
+            description: formData.get('description') as string,
+            dangers: formData.get('dangers') as string,
+            hooks: formData.get('hooks') as string,
+          });
+        }} className="p-4 space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-amber-500 mb-1">Location Name</label>
+            <input name="name" defaultValue={editData?.name} required className="w-full bg-stone-950 border border-stone-700 rounded p-2 text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-amber-500 mb-1">Type</label>
+            <select name="type" defaultValue={editData?.type} className="w-full bg-stone-950 border border-stone-700 rounded p-2 text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+              <option value="City">City</option>
+              <option value="Wilderness">Wilderness</option>
+              <option value="Dungeon">Dungeon</option>
+              <option value="Planar">Planar</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-amber-500 mb-1">Description</label>
+            <textarea name="description" defaultValue={editData?.description} required rows={3} className="w-full bg-stone-950 border border-stone-700 rounded p-2 text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-amber-500 mb-1">Dangers & Secrets</label>
+            <textarea name="dangers" defaultValue={editData?.dangers} rows={2} className="w-full bg-stone-950 border border-stone-700 rounded p-2 text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500" />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-amber-500 mb-1">Plot Hooks</label>
+            <textarea name="hooks" defaultValue={editData?.hooks} rows={2} className="w-full bg-stone-950 border border-stone-700 rounded p-2 text-stone-100 focus:border-amber-500 focus:ring-1 focus:ring-amber-500" />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded p-2 text-sm font-bold transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 bg-amber-600 hover:bg-amber-500 text-white rounded p-2 text-sm font-bold transition-colors">{editData ? 'Update' : 'Create')}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
       const [activeTab, setActiveTab] = useState('overview'); // or whichever default you prefer
 const [locations, setLocations] = useState<any[]>([]);
 const [selectedLocation, setSelectedLocation] = useState<any>(null);
@@ -148,6 +209,7 @@ const exportCampaignNotes = () => {
 <CampaignCodex 
   locations={locations} 
   onAddClick={() => { setLocationToEdit(null); setIsLocationModalOpen(true); }} 
+      <AddLocationModal isOpen={isLocationModalOpen} onClose={() => setIsLocationModalOpen(false)} onSave={(data: any) => { const exists = locations.find(l => l.id === data.id); if (exists) { setLocations(locations.map(l => l.id === data.id ? data : l)); } else { setLocations([...locations, data]); } }} editData={locationToEdit} />
   onViewLore={viewLocationLore}
   onDelete={(id) => setLocations(locations.filter(l => l.id !== id))} // Passes the logic
   onEdit={(loc) => { setLocationToEdit(loc); setIsLocationModalOpen(true); }} // Passes the logic
@@ -201,87 +263,3 @@ const exportCampaignNotes = () => {
 </div>
 </div>
       </main>
-      <AddLocationModal 
-  isOpen={isLocationModalOpen} 
-  editData={locationToEdit}
-  onClose={() => setIsLocationModalOpen(false)} 
-onSave={(newLoc: any) => {
-    // Check if we are currently editing an existing location
-    if (locationToEdit) {
-      // Find the old one by ID and swap it for the new version
-      setLocations(locations.map(l => l.id === newLoc.id ? newLoc : l));
-    } else {
-      // Otherwise, just add it to the list like normal
-      setLocations([...locations, newLoc]);
-    }
-    setIsLocationModalOpen(false);
-  }}
-/>
-    </div>
-  );
-}
-
-function AddLocationModal({ isOpen, onClose, onSave, editData }: any) {
-  const [name, setName] = useState('');
-  const [pop, setPop] = useState('');
-  const [lore, setLore] = useState('');
-
-  // This fills the boxes if we are editing an existing location
-  useEffect(() => {
-    if (editData) {
-      setName(editData.name);
-      setPop(editData.population);
-      setLore(editData.loreBody);
-    } else {
-      setName(''); setPop(''); setLore('');
-    }
-  }, [editData, isOpen]);
-
-  if (!isOpen) return null;
-
-  const handleSubmit = () => {
-    const locationData = {
-      // Keep the same ID if editing, otherwise make a new one
-      id: editData ? editData.id : name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now().toString().slice(-3),
-      name,
-      population: pop,
-      shortDesc: lore.substring(0, 60) + "...",
-      loreBody: lore
-    };
-    onSave(locationData);
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 font-serif">
-      <div className="bg-stone-900 border-2 border-amber-900/50 w-full max-w-md rounded-lg p-6 shadow-2xl">
-        <h2 className="text-amber-500 text-2xl mb-4 uppercase tracking-wider">
-          {editData ? 'Edit Location' : 'Map New Location'}
-        </h2>
-        <div className="space-y-4">
-          <input 
-            value={name} onChange={(e) => setName(e.target.value)}
-            className="w-full bg-stone-800 border border-stone-700 p-2 rounded text-stone-200 outline-none focus:border-amber-600" 
-            placeholder="Location Name"
-          />
-          <input 
-            value={pop} onChange={(e) => setPop(e.target.value)}
-            className="w-full bg-stone-800 border border-stone-700 p-2 rounded text-stone-200 outline-none focus:border-amber-600" 
-            placeholder="Population"
-          />
-          <textarea 
-            value={lore} onChange={(e) => setLore(e.target.value)}
-            className="w-full bg-stone-800 border border-stone-700 p-2 rounded text-stone-200 h-32 outline-none focus:border-amber-600" 
-            placeholder="Lore & History..."
-          />
-          <div className="flex gap-2">
-            <button onClick={handleSubmit} className="flex-1 bg-amber-600 hover:bg-amber-500 text-stone-900 font-bold py-2 rounded">
-              {editData ? 'Update' : 'Save'}
-            </button>
-            <button onClick={onClose} className="flex-1 bg-stone-800 text-stone-400 py-2 rounded">Cancel</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}

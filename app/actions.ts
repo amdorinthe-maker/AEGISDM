@@ -6,11 +6,12 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
 
 export async function generateAIGent(type: 'encounter' | 'loot' | 'npc', context: string) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash",
-        generationConfig : {
-            responseMimeType: "application/json",
-        }
-     });
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      generationConfig : {
+        responseMimeType: "application/json",
+      }
+    });
     let prompt = "";
 
 if (type === 'npc') {
@@ -56,7 +57,7 @@ if (type === 'npc') {
   } catch (error) {
     console.error("AI Error:", error);
     return { text: JSON.stringify({
-        name: "Connection Interupted",
+        name: "Connection Interrupted",
         race: "System",
         role: "Error",
         lore: "The threads of the multiverse are tangled... the AI couldn't generate content right now. Try again in a moment!",
@@ -68,7 +69,7 @@ if (type === 'npc') {
 export async function generateNPCPortrait(appearance: string) {
   try {
     // 1. Use the Gemini 3 Flash model
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `A professional D&D character portrait, fantasy style, digital oil painting. 
     Character details: ${appearance}. Cinematic lighting, detailed face, neutral background.`;
