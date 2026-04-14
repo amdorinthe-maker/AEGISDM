@@ -44,7 +44,8 @@ const RulesLookup = () => {
       setLoading(false);
     }
   };
-
+// ADD THIS LINE
+console.log("FULL DATA OBJECT:", selectedItem);
   return (
     <div className="flex flex-col gap-4 bg-stone-900/40 p-6 rounded-xl border border-amber-900/20 h-full min-h-[500px]">
       <div className="flex items-center justify-between gap-4">
@@ -105,6 +106,16 @@ const RulesLookup = () => {
               </div>
               
               {/* MONSTER STATS SECTION (Only shows if it's a creature) */}
+              {selectedItem.image && (
+  <div className="mb-6 rounded-lg overflow-hidden border-2 border-amber-900/20 shadow-xl bg-stone-950/50 relative group">
+    <img 
+    src={`https://www.dnd5eapi.co${selectedItem.image}`}
+      alt={selectedItem.name}
+      className="w-full h-56 object-contain p-2 filter sepia-[.4] grayscale-[.2] group-hover:sepia-0 group-hover:grayscale-0 transition-all duration-700"
+    />
+    <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 to-transparent pointer-events-none" />
+  </div>
+)}
               {selectedItem.type && (
                 <>
                   <div className="grid grid-cols-2 gap-4 py-3 border-b border-amber-900/20 mb-4">
