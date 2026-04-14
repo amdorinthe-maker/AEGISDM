@@ -6,7 +6,7 @@ import { generateAIGent, generateNPCPortrait}from '@/app/actions';
 
 const NPCManager = ({ npcs = [], onDelete, onEdit, npcToEdit, onStartEdit }: any) => {
   const [mode, setMode] = useState<'view' | 'manual'>('view');
-  const [manualNPC, setManualNPC] = useState({ name: '', role: '', race: '', description: '', id: '' });
+  const [manualNPC, setManualNPC] = useState({ name: '', role: '', race: '', description: '', id: '', image: '' });
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
