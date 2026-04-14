@@ -34,6 +34,30 @@ const startEdit = (location: any) => {
   setLocationToEdit(location);
   setIsLocationModalOpen(true);
 };
+const exportCampaignNotes = () => {
+  // Pull the text directly from the archive drawer
+  const data = localStorage.getItem('aegis_notes') || "";
+  
+  if (!data) {
+    alert("The archive is empty! Write some notes before exporting.");
+    return;
+  }
+
+  const campaignName = prompt("Enter Campaign Name:", "My_Epic_Campaign");
+  
+  if (campaignName) {
+    // Create the physical file
+    const blob = new Blob([data], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    link.href = url;
+    link.download = `${campaignName.replace(/\s+/g, '_')}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
   return (
 
     <div className="min-h-screen bg-stone-950 text-stone-200 font-serif">
@@ -52,12 +76,22 @@ const startEdit = (location: any) => {
         
         {/* Session Log at Top */}
         <div className="bg-stone-900/40 border border-amber-900/20 rounded-xl p-3">
+        
           <textarea 
+          
             className="w-full h-20 bg-transparent text-stone-300 font-serif leading-relaxed focus:outline-none resize-none placeholder:text-stone-800 p-2 italic"
             placeholder="Quick session notes..."
             onChange={(e) => localStorage.setItem('aegis_notes', e.target.value)}
             defaultValue={typeof window !== 'undefined' ? localStorage.getItem('aegis_notes') || "" : ""}
-          />
+          /><div className="flex justify-between items-center mb-2">
+  <span className="text-[10px] uppercase tracking-widest text-amber-700/70 font-bold">Session Log</span>
+  <button 
+    onClick={exportCampaignNotes}
+    className="text-[9px] uppercase tracking-[0.2em] text-amber-500 hover:text-amber-400 transition-colors bg-amber-900/20 px-2 py-1 rounded border border-amber-900/30"
+  >
+    💾 Archive Campaign
+  </button>
+</div>
         </div>
 
         {/* 3-COLUMN GRID */}
