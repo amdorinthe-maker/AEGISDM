@@ -65,34 +65,33 @@ if (type === 'npc') {
      };
   }
 }
-// app/actions.ts
 export async function generateNPCPortrait(appearance: string) {
   try {
-    // We use the specialized Nano Banana 2 model for image generation
-    // This is the model that powers "Gemini 3 Flash Image"
+    // 1. Use the Gemini 3 Flash model
+    const model = genAI.getGenerativeModel({ model: "gemini-3-flash" });
+
     const prompt = `A professional D&D character portrait, fantasy style, digital oil painting. 
     Character details: ${appearance}. Cinematic lighting, detailed face, neutral background.`;
 
-    // Internal tool call for image generation
-    const result = await image_generation({ 
-      prompt: prompt,
-      aspect_ratio: "1:1" 
-    });
+    // 2. Call the model using the official generateContent method
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    
+    // 3. Extract the image URL or Data URI from the response
+    // If the model returns an image, it will be in the parts array
+    const imagePart = response.candidates?.[0].content.parts.find(p => p.inlineData || p.fileData);
 
-    // We return the generated URL
-    return { imageUrl: result.image_url }; 
+    if (imagePart?.inlineData) {
+      return { imageUrl: `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}` };
+    }
 
-} catch (error) {
-  console.error("AI Error:", error);
-  // Return a valid JSON string even in failure
-  return { 
-    text: JSON.stringify({
-      name: "Tangled Weave",
-      race: "Magic",
-      role: "Error",
-      lore: "The weave of magic is tangled... try again in a moment!",
-      appearance_tags: "mystical energy"
-    })
-  };
-}}
+    // Fallback if no image data was found in the successful response
+    return { imageUrl: `https://api.dicebear.com/7.x/adventurer/svg?seed=${appearance.length}` };
 
+  } catch (error) {
+    console.error("Image Gen Error:", error);
+    // 4. Return an image URL even on failure so the UI doesn't break
+    // DO NOT return JSON text here, as the UI is expecting an image src
+    return { imageUrl: `https://api.dicebear.com/7.x/adventurer/svg?seed=error-${Date.now()}` };
+  }
+}
