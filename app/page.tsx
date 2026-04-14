@@ -24,7 +24,7 @@ function AddLocationModal({ isOpen, onClose, onSave, editData }: any) {
     <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
       <div className="bg-stone-900 border border-amber-500/30 rounded-lg w-full max-w-md shadow-2xl shadow-amber-900/20 overflow-hidden">
         <div className="bg-gradient-to-r from-amber-900/20 to-stone-900 p-4 border-b border-amber-500/20">
-          <h2 className="text-lg font-bold text-amber-500">{editData ? 'Edit Location' : 'Add New Location')}</h2>
+          <h2 className="text-lg font-bold text-amber-500">{editData ? 'Edit Location' : 'Add New Location'}</h2>
         </div>
         <form onSubmit={(e) => {
           e.preventDefault();
