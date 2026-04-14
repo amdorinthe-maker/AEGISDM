@@ -88,7 +88,7 @@ const handleAiGen = async () => {
     };
 
     onEdit(npcToSave);
-    setManualNPC({ name: '', role: '', race: '', description: '', id: '' });
+    setManualNPC({ name: '', role: '', race: '', description: '', id: '', image: '' });
     setMode('view');
   };
 
