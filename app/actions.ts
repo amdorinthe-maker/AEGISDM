@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
 
 export async function generateAIGent(type: 'encounter' | 'loot' | 'npc', context: string) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash",
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash",
         generationConfig : {
             responseMimeType: "application/json",
         }
@@ -68,7 +68,7 @@ if (type === 'npc') {
 export async function generateNPCPortrait(appearance: string) {
   try {
     // 1. Use the Gemini 3 Flash model
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `A professional D&D character portrait, fantasy style, digital oil painting. 
     Character details: ${appearance}. Cinematic lighting, detailed face, neutral background.`;
