@@ -249,7 +249,7 @@ const toggleStatus = (id: any, conditionName: string) => {
     
     {/* Status Badges - Now with a bit of margin */}
     <div className="flex gap-1 flex-wrap">
-      {c.statuses?.map(statusName => {
+      {c.statuses?.map((statusName: string) => {
         const config = CONDITIONS.find(con => con.name === statusName);
         return (
           <span 
