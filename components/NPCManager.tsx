@@ -2,12 +2,23 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserPlus, Sparkles, Trash2, Edit3, User, Loader2 } from 'lucide-react';
-import { generateAIGent, generateNPCPortrait}from '@/app/actions';
+import { generateAIGent, generateNPCPortrait } from '@/app/actions';
 
 const NPCManager = ({ npcs = [], onDelete, onEdit, npcToEdit, onStartEdit }: any) => {
   const [mode, setMode] = useState<'view' | 'manual'>('view');
   const [manualNPC, setManualNPC] = useState({ name: '', role: '', race: '', description: '', id: '', image: '' });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [campaignName, setCampaignName] = useState("");
+
+  // Listen for campaign changes just to update the UI labels
+  useEffect(() => {
+    const updateLabel = () => {
+      setCampaignName(localStorage.getItem('aegis_campaign_name') || "New Saga");
+    };
+    updateLabel();
+    window.addEventListener('campaign-updated', updateLabel);
+    return () => window.removeEventListener('campaign-updated', updateLabel);
+  }, []);
 
   useEffect(() => {
     if (npcToEdit) {
@@ -16,7 +27,7 @@ const NPCManager = ({ npcs = [], onDelete, onEdit, npcToEdit, onStartEdit }: any
     }
   }, [npcToEdit]);
 
-  // --- 1. THE INSTANT LIST GENERATOR (Original) ---
+  // --- 1. THE INSTANT LIST GENERATOR ---
   const quickGen = () => {
     const names = ["Finnian", "Crom", "Elara", "Morgath", "Zinnia", "Kaelen", "Runa", "Varis"];
     const roles = ["Merchant", "Sellsword", "Scholar", "Pickpocket", "Innkeeper", "Acolyte"];
@@ -44,37 +55,30 @@ const NPCManager = ({ npcs = [], onDelete, onEdit, npcToEdit, onStartEdit }: any
     onEdit(newNPC);
   };
 
-  // --- 2. THE AI AUTO-FILL (New) ---
-const handleAiGen = async () => {
-  setIsGenerating(true);
-  try {
-    const response = await generateAIGent('npc', 'Town DATA_ONLY');
-    
-    // 1. Define and parse 'data' clearly within the try block
-    const data = JSON.parse(response.text);
+  // --- 2. THE AI AUTO-FILL ---
+  const handleAiGen = async () => {
+    setIsGenerating(true);
+    try {
+      const response = await generateAIGent('npc', 'Town DATA_ONLY');
+      const data = JSON.parse(response.text);
+      const visualPrompt = `${data.race} ${data.role}, ${data.appearance_tags || data.lore}`;
+      const imgResponse = await generateNPCPortrait(visualPrompt);
 
-    // 2. Now 'data' is defined and accessible for the next steps
-    const visualPrompt = `${data.race} ${data.role}, ${data.appearance_tags || data.lore}`;
-    
-    // 3. Call the image generator
-    const imgResponse = await generateNPCPortrait(visualPrompt);
-
-    setManualNPC({
-      ...manualNPC,
-      name: data.name,
-      race: data.race,
-      role: data.role,
-      description: data.lore,
-      image: imgResponse.imageUrl
-    });
-  } catch (error) {
-    console.error("Master AI Gen Error:", error);
-    // Set a fallback NPC name so the user knows it failed
-    setManualNPC({ ...manualNPC, name: "Failed to summon NPC..." });
-  } finally {
-    setIsGenerating(false);
-  }
-};
+      setManualNPC({
+        ...manualNPC,
+        name: data.name,
+        race: data.race,
+        role: data.role,
+        description: data.lore,
+        image: imgResponse.imageUrl
+      });
+    } catch (error) {
+      console.error("Master AI Gen Error:", error);
+      setManualNPC({ ...manualNPC, name: "Failed to summon NPC..." });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const addManual = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,7 +88,7 @@ const handleAiGen = async () => {
       ...manualNPC, 
       id: manualNPC.id || Date.now().toString(),
       status: "Alive",
-      image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${manualNPC.name}`
+      image: manualNPC.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${manualNPC.name}`
     };
 
     onEdit(npcToSave);
@@ -95,12 +99,20 @@ const handleAiGen = async () => {
   return (
     <div className="bg-stone-900/40 border border-amber-900/20 rounded-xl p-6 min-h-[400px]">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl text-amber-500 font-serif flex items-center gap-2">
-          <User size={20} /> NPC Gallery
-        </h2>
+        <div>
+            <h2 className="text-xl text-amber-500 font-serif flex items-center gap-2">
+            <User size={20} /> NPC Vault
+            </h2>
+            <p className="text-[9px] uppercase tracking-widest text-stone-500 font-bold ml-7">
+                Saga: {campaignName}
+            </p>
+        </div>
         <div className="flex gap-2">
           <button 
-            onClick={() => setMode(mode === 'manual' ? 'view' : 'manual')}
+            onClick={() => {
+                setMode(mode === 'manual' ? 'view' : 'manual');
+                if (mode === 'manual') setManualNPC({ name: '', role: '', race: '', description: '', id: '', image: '' });
+            }}
             className="flex items-center gap-2 bg-stone-800 hover:bg-stone-700 text-stone-300 px-3 py-1.5 rounded-lg text-xs border border-stone-700 transition-all"
           >
             {mode === 'manual' ? 'Cancel' : <><Edit3 size={14} /> Manual Add</>}
@@ -141,21 +153,34 @@ const handleAiGen = async () => {
             <label className="text-[10px] uppercase text-stone-500 font-bold">Description</label>
             <textarea className="w-full bg-stone-900 border border-stone-800 rounded p-2 text-base text-stone-200 h-24 resize-none" value={manualNPC.description} onChange={e => setManualNPC({...manualNPC, description: e.target.value})} />
           </div>
-          <button type="submit" className="w-full bg-amber-900/40 text-amber-500 py-3 rounded text-xs font-bold tracking-widest">Save NPC</button>
+          <button type="submit" className="w-full bg-amber-900/40 text-amber-500 py-3 rounded text-xs font-bold tracking-widest hover:bg-amber-900/60 transition-colors">
+            {manualNPC.id ? 'Update NPC' : 'Save NPC'}
+          </button>
         </form>
       ) : (
-        /* ... gallery mapping code ... */
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {npcs.map((npc: any) => (
-             <div key={npc.id} className="bg-stone-900/80 border border-amber-900/30 rounded-lg p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+          {npcs.length > 0 ? npcs.map((npc: any) => (
+             <div key={npc.id} className="bg-stone-900/80 border border-amber-900/30 rounded-lg p-4 group hover:border-amber-500/50 transition-all">
                <div className="flex justify-between items-start">
-                 <div className="w-12 h-12 rounded bg-stone-800 overflow-hidden"><img src={npc.image} alt={npc.name} className="w-full h-full object-cover" /></div>
-                 <div className="flex-1 ml-3"><h3 className="text-amber-500 font-serif text-lg font-bold">{npc.name}</h3><p className="text-[10px] text-stone-400 uppercase">{npc.race} {npc.role}</p></div>
-                 <div className="flex gap-1"><button onClick={() => onStartEdit(npc)}><Edit3 size={14}/></button><button onClick={() => onDelete(npc.id)}><Trash2 size={14}/></button></div>
+                 <div className="w-12 h-12 rounded bg-stone-800 overflow-hidden border border-stone-700">
+                    <img src={npc.image} alt={npc.name} className="w-full h-full object-cover" />
+                 </div>
+                 <div className="flex-1 ml-3">
+                    <h3 className="text-amber-500 font-serif text-lg font-bold leading-tight">{npc.name}</h3>
+                    <p className="text-[10px] text-stone-400 uppercase tracking-tighter">{npc.race} {npc.role}</p>
+                 </div>
+                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => onStartEdit(npc)} className="text-stone-500 hover:text-amber-500"><Edit3 size={14}/></button>
+                    <button onClick={() => onDelete(npc.id)} className="text-stone-500 hover:text-rose-500"><Trash2 size={14}/></button>
+                 </div>
                </div>
-               <p className="text-stone-300 text-sm italic border-t border-amber-900/10 mt-2 pt-2">{npc.description}</p>
+               <p className="text-stone-300 text-sm italic border-t border-amber-900/10 mt-2 pt-2 line-clamp-3">{npc.description}</p>
              </div>
-          ))}
+          )) : (
+            <div className="col-span-2 py-10 text-center text-stone-600 italic text-sm border-2 border-dashed border-stone-800 rounded-xl">
+                No NPCs found in {campaignName}. Use Quick Gen to populate the town.
+            </div>
+          )}
         </div>
       )}
     </div>
