@@ -24,7 +24,7 @@ const toggleStatus = (id: any, conditionName: string) => {
       return {
         ...c,
         statuses: hasStatus 
-          ? currentStatuses.filter(s => s !== conditionName) 
+          ? currentStatuses.filter((s:string) => s !== conditionName) 
           : [...currentStatuses, conditionName]
       };
     }

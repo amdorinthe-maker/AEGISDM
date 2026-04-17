@@ -24,7 +24,7 @@ useEffect(() => {
     return () => window.removeEventListener('campaign-updated', handleUpdate);
   }, []);
 
-  const exportFullCampaign = () => {
+const exportFullCampaign = () => {
   // 1. Get the current campaign identity
   const campaignName = localStorage.getItem('aegis_campaign_name') || "New Saga";
 
