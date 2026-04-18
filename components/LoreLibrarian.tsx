@@ -20,6 +20,7 @@ const processTrelloLore = (rawData: any) => {
 };
 
 
+
 export default function LoreLibrarian({ 
   data, 
   campaignName, 
@@ -42,21 +43,47 @@ const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
-      const rawJson = JSON.parse(e.target?.result as string);
-      const cleaned = processTrelloLore(rawJson);
+      const json = JSON.parse(e.target?.result as string);
 
-      // 1. SAVE TO THE CURRENT CAMPAIGN ONLY
-      // Instead of using 'newName' from the JSON, we use the 'campaignName' 
-      // already passed into this component as a prop.
+      // --- SCENARIO A: FULL AEGIS EXPORT (v2.0) ---
+      if (json.version === "2.0") {
+        const name = json.campaignName;
+        
+        // 1. Save all three "pillars" to LocalStorage
+        localStorage.setItem('aegis_campaign_name', name);
+        localStorage.setItem(`aegis_lore_${name}`, JSON.stringify(json.lore || []));
+        localStorage.setItem(`aegis_npcs_${name}`, JSON.stringify(json.npcs || []));
+        localStorage.setItem(`aegis_locations_${name}`, JSON.stringify(json.locations || []));
+        localStorage.setItem(`aegis_party_${name}`, JSON.stringify(json.party || []));
+        localStorage.setItem(`aegis_notes_${name}`, json.notes || "");
+
+
+        const savedList = localStorage.getItem('aegis_campaign_list');
+        let list = savedList ? JSON.parse(savedList) : ["The Grand Archive"];
+        if (!list.includes(name)) {
+          list.push(name);
+          localStorage.setItem('aegis_campaign_list', JSON.stringify(list));
+        }
+
+
+
+        onCampaignChange(name, json.lore || []);
+        
+        // 3. Dispatch the event so NPCS and Locations sync up
+        window.dispatchEvent(new Event('campaign-updated'));
+        
+        event.target.value = ""; 
+        return;
+      }
+
+      // --- SCENARIO B: RAW TRELLO OR LORE ONLY ---
+      const cleaned = json.lore ? json.lore : processTrelloLore(json);
       localStorage.setItem(`aegis_lore_${campaignName}`, JSON.stringify(cleaned));
-
-      // 2. TRIGGER SYNC WITHOUT CHANGING THE NAME
-      // We pass the SAME campaignName back up, so the header doesn't move.
       onCampaignChange(campaignName, cleaned);
-
+      
       event.target.value = ""; 
     } catch (err) {
-      alert("Invalid Trello JSON.");
+      alert("Error importing. Make sure it's a valid AEGIS or Trello JSON.");
     }
   };
   reader.readAsText(file);

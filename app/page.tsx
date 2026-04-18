@@ -15,6 +15,8 @@ import GeneratorHub from '@/components/GeneratorHub';
 import CampaignCodex from '@/components/CampaignCodex';
 import SagaManager from '@/components/SagaManager';
 import LoreLibrarian from '@/components/LoreLibrarian';
+import CompendiumDrawer from '@/components/CompendiumDrawer';
+
 
 
 export default function Home() {
@@ -29,6 +31,8 @@ export default function Home() {
   setAllLore([]);
 
 };
+  const [isCompendiumOpen, setIsCompendiumOpen] = useState(false);
+
 
   // --- CAMPAIGN DATA STATE ---
   const [npcs, setNpcs] = useState<any[]>([]);
@@ -36,38 +40,59 @@ export default function Home() {
   const [locations, setLocations] = useState<any[]>([]);
   const [locationToEdit, setLocationToEdit] = useState<any>(null);
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
+  const [notes, setNotes] = useState('');
 
+const handleTextChange = (val: string) => {
+  setNotes(val);
+  // This ensures that as you type, it saves to the correct campaign slot
+  const currentCampaign = localStorage.getItem('aegis_campaign_name') || "The Grand Archive";
+  localStorage.setItem(`aegis_notes_${currentCampaign}`, val);
+};
 // --- THE MASTER CAMPAIGN SYNC ---
 useEffect(() => {
   const syncEverything = () => {
-    // 1. Get the Current Campaign ID
+    // 1. Get the current active campaign
     const currentCampaign = localStorage.getItem('aegis_campaign_name') || "The Grand Archive";
     setCampaignName(currentCampaign);
 
-    // 2. Load World Data (NPCs/Locations tied to THIS campaign)
+    // 2. Load World Data (NPCs & Locations)
     const savedNpcs = localStorage.getItem(`aegis_npcs_${currentCampaign}`);
     setNpcs(savedNpcs ? JSON.parse(savedNpcs) : []);
 
     const savedLocs = localStorage.getItem(`aegis_locations_${currentCampaign}`);
     setLocations(savedLocs ? JSON.parse(savedLocs) : []);
 
-    // 3. Load the Library Lore (The Trello JSON data)
-  const savedLore = localStorage.getItem(`aegis_lore_${currentCampaign}`);
+    // 3. Load the Party (The piece that was missing!)
+    const savedParty = localStorage.getItem(`aegis_party_${currentCampaign}`);
+    setParty(savedParty ? JSON.parse(savedParty) : []);
+    const savedNotes = localStorage.getItem(`aegis_notes_${currentCampaign}`);
+    setNotes(savedNotes || "");
+    // 4. Load the Library Lore
+    const savedLore = localStorage.getItem(`aegis_lore_${currentCampaign}`);
     if (savedLore && savedLore !== "undefined") {
       setAllLore(JSON.parse(savedLore));
     } else {
-      setAllLore([]); // If nothing is there, it MUST be an empty array
+      setAllLore([]); 
     }
 
     setSelectedLocation(null);
-  };
 
+
+  };
+  
+
+  // Run immediately on mount
   syncEverything();
 
-  // This catches updates from the Header or SagaManager
+  // Listen for external updates (like from the Import or Campaign Switcher)
   window.addEventListener('campaign-updated', syncEverything);
-  return () => window.removeEventListener('campaign-updated', syncEverything);
-}, []);
+  window.addEventListener('party-updated', syncEverything);
+
+  return () => {
+    window.removeEventListener('campaign-updated', syncEverything);
+    window.removeEventListener('party-updated', syncEverything);
+  };
+}, [campaignName]); // Runs whenever the campaign name changes
 
   // --- NPC HANDLERS ---
   const handleNpcChange = (updatedList: any[]) => {
@@ -119,7 +144,29 @@ useEffect(() => {
     if (selectedLocation?.id === id) setSelectedLocation(null);
   };
 
-  
+  const exportFullCampaign = () => {
+  const fullData = {
+    version: "2.0", // New version for full campaign exports
+    campaignName: campaignName,
+    npcs: npcs,
+    locations: locations,
+    lore: allLore,
+    party: party,
+    notes: notes,
+    exportedAt: new Date().toISOString()
+  };
+
+  const blob = new Blob([JSON.stringify(fullData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `AEGIS_FULL_${campaignName.replace(/\s+/g, '_')}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+const [party, setParty] = useState<any[]>([]);
+
 
 
   return (
@@ -132,11 +179,24 @@ useEffect(() => {
 
             <Shield className="text-amber-600" /> AEGIS DM ASSISTANT
           </h1>
+          <div className="flex items-center gap-6">
+      <button 
+        onClick={exportFullCampaign} // <--- This "reads" the function!
+        className="flex items-center gap-2 px-3 py-1 bg-amber-900/20 border border-amber-900/40 rounded text-amber-600 hover:bg-amber-900/40 transition-all text-[10px] uppercase font-bold tracking-widest"
+      >
+        Export Full Saga
+      </button>
+      <button 
+  onClick={() => setIsCompendiumOpen(true)}
+  className="p-2 text-amber-600 hover:text-amber-400 transition-colors flex items-center gap-2"
+>
+  <span className="text-xl">📜</span> <span className="text-xs font-serif uppercase tracking-widest">Compendium</span>
+</button>
           <div className="text-xs text-stone-500 uppercase tracking-widest font-bold">
             Vault Protocol Active
           </div>
         </div>
-          
+         </div> 
       </header>
 
       {/* MAIN DASHBOARD */}
@@ -154,8 +214,24 @@ useEffect(() => {
           
           {/* COLUMN 1: TACTICAL (LEFT) */}
           <div className="xl:col-span-3 space-y-6">
-            <PartyTracker />
-            <CombatTracker npcs={npcs}/>
+<PartyTracker 
+  players={party} 
+  campaignName={campaignName} // <--- This clears the red error!
+  onUpdate={(newParty: any[]) => {
+    setParty(newParty);
+    localStorage.setItem(`aegis_party_${campaignName}`, JSON.stringify(newParty));
+    // Trigger the sync for the Combat Tracker
+    window.dispatchEvent(new Event('party-updated'));
+  }} 
+/>
+            <CombatTracker npcs={npcs}
+            party={party} // Pass the players
+            onUpdateParty={(newList) => { // Pass the update function
+            requestAnimationFrame(() => {
+    setParty(newList);
+    localStorage.setItem(`aegis_party_${campaignName}`, JSON.stringify(newList));
+  });
+}}/>
           </div>
 
           {/* COLUMN 2: UTILITY (CENTER) */}
@@ -257,6 +333,10 @@ useEffect(() => {
             </div>
           </div>
         </div>
+        <CompendiumDrawer 
+  isOpen={isCompendiumOpen} 
+  onClose={() => setIsCompendiumOpen(false)} 
+/>
       </main>
 
       {/* MODALS */}
@@ -271,7 +351,9 @@ useEffect(() => {
           onClose={() => setIsSagaModalOpen(false)} 
         />
     </div>
+    
   );
+  
 }
 
 // --- SUB-COMPONENT: LOCATION MODAL ---
@@ -346,5 +428,7 @@ function AddLocationModal({ isOpen, onClose, onSave, editData }: any) {
         </div>
       </div>
     </div>
+    
   );
+  
 }

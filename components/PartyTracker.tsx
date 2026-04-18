@@ -1,58 +1,32 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Users, Shield, Heart, Eye, Trash2, Plus, Minus, Dices } from 'lucide-react';
 
-const PartyTracker = () => {
-  const [players, setPlayers] = useState<any[]>([]);
+// We now accept players and onUpdate as props from the main page
+interface PartyTrackerProps {
+  players: any[];
+  onUpdate: (newList: any[]) => void;
+  campaignName: string;
+}
+
+const PartyTracker = ({ players, onUpdate, campaignName }: PartyTrackerProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [newChar, setNewChar] = useState({ name: '', ac: '', hp: '', pp: '', dex: '' });
-  const [campaignName, setCampaignName] = useState("New Saga");
 
-  // 1. Unified Load/Sync Function
-  const syncFromVault = () => {
-    const currentName = localStorage.getItem('aegis_campaign_name') || "New Saga";
-    setCampaignName(currentName);
-    
-    const savedParty = localStorage.getItem(`aegis_party_${currentName}`);
-    if (savedParty) {
-      setPlayers(JSON.parse(savedParty));
-    } else {
-      setPlayers([]);
-    }
-  };
-
-  // 2. Setup Listeners
-  useEffect(() => {
-    syncFromVault(); // Run on mount
-
-    window.addEventListener('campaign-updated', syncFromVault);
-    window.addEventListener('party-updated', syncFromVault); // Listen for combat tracker changes
-    
-    return () => {
-      window.removeEventListener('campaign-updated', syncFromVault);
-      window.removeEventListener('party-updated', syncFromVault);
-    };
-  }, []);
-
-  // 3. Single Save Function
-  const saveToVault = (newList: any[]) => {
-    setPlayers(newList);
-    const currentName = localStorage.getItem('aegis_campaign_name') || "New Saga";
-    localStorage.setItem(`aegis_party_${currentName}`, JSON.stringify(newList));
-    
-    // Tell the Combat Tracker to wake up
-    window.dispatchEvent(new Event('party-updated'));
-  };
+  // 1. We no longer need an internal useEffect or sync function.
+  // The main page handles the loading/saving to the vault.
 
   const addPlayer = () => {
     if (!newChar.name) return;
     const player = { 
       ...newChar, 
       id: Date.now(), 
+      type: 'player',
       currentHp: parseInt(newChar.hp) || 0 
     };
-    saveToVault([...players, player]);
+    // Send the update up to the main page
+    onUpdate([...players, player]);
     setNewChar({ name: '', ac: '', hp: '', pp: '', dex: '' });
     setIsAdding(false);
   };
@@ -65,11 +39,13 @@ const PartyTracker = () => {
       }
       return p;
     });
-    saveToVault(newList);
+    // Send the update up to the main page
+    onUpdate(newList);
   };
 
   const deletePlayer = (id: number) => {
-    saveToVault(players.filter(p => p.id !== id));
+    // Send the update up to the main page
+    onUpdate(players.filter(p => p.id !== id));
   };
 
   return (

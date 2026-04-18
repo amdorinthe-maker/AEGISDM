@@ -3,45 +3,90 @@
 import React, { useState, useEffect } from 'react';
 import { Swords, Shield, Heart, Trash2, Plus, UserPlus, Dices } from 'lucide-react';
 
-const CombatTracker = ({ npcs = [] }: { npcs: any[] }) => {
+// FIXED: Added 'function' keyword and ensured props are used
+export default function CombatTracker({ npcs, party, onUpdateParty }: { 
+  npcs: any[], 
+  party: any[], 
+  onUpdateParty: (newList: any[]) => void 
+}) {
   const [combatants, setCombatants] = useState<any[]>([]);
   const [turn, setTurn] = useState(0);
   const [isVaultOpen, setIsVaultOpen] = useState(false);
   const syncLock = React.useRef(false);
+
   const CONDITIONS = [
-  { name: 'Concentrating', color: 'bg-blue-500', icon: '✨' },
-  { name: 'Prone', color: 'bg-stone-500', icon: '🏹' },
-  { name: 'Stunned', color: 'bg-yellow-500', icon: '🌀' },
-  { name: 'Poisoned', color: 'bg-emerald-500', icon: '🤢' },
-  { name: 'Frightened', color: 'bg-purple-500', icon: '😨' },
-  { name: 'Blessed', color: 'bg-amber-400', icon: '🙏' },
-];
-const toggleStatus = (id: any, conditionName: string) => {
-  setCombatants(prev => prev.map(c => {
-    if (c.id === id) {
-      const currentStatuses = c.statuses || [];
-      const hasStatus = currentStatuses.includes(conditionName);
-      return {
-        ...c,
-        statuses: hasStatus 
-          ? currentStatuses.filter((s:string) => s !== conditionName) 
-          : [...currentStatuses, conditionName]
-      };
-    }
-    return c;
-  }));
-};
+    { name: 'Concentrating', color: 'bg-blue-500', icon: '✨' },
+    { name: 'Prone', color: 'bg-stone-500', icon: '🏹' },
+    { name: 'Stunned', color: 'bg-yellow-500', icon: '🌀' },
+    { name: 'Poisoned', color: 'bg-emerald-500', icon: '🤢' },
+    { name: 'Frightened', color: 'bg-purple-500', icon: '😨' },
+    { name: 'Blessed', color: 'bg-amber-400', icon: '🙏' },
+  ];
+
+  const toggleStatus = (id: any, conditionName: string) => {
+    setCombatants(prev => prev.map(c => {
+      if (c.id === id) {
+        const currentStatuses = c.statuses || [];
+        const hasStatus = currentStatuses.includes(conditionName);
+        return {
+          ...c,
+          statuses: hasStatus 
+            ? currentStatuses.filter((s:string) => s !== conditionName) 
+            : [...currentStatuses, conditionName]
+        };
+      }
+      return c;
+    }));
+  };
+
   // --- SYNC LOGIC ---
-  const syncFromVault = () => {
+const syncFromVault = () => {
+  if (syncLock.current) return;
+  const campaignName = localStorage.getItem('aegis_campaign_name') || "New Saga";
+  const savedParty = localStorage.getItem(`aegis_party_${campaignName}`);
+  if (!savedParty) return;
+  const currentParty = JSON.parse(savedParty);
+
+  setCombatants(prev => {
+    if (prev.length === 0) {
+      return currentParty.map((p: any) => ({
+        id: `pc-${p.id}`,
+        name: p.name,
+        init: 0,
+        hp: p.currentHp || 0,
+        ac: p.ac || 10,
+        dex: p.dex || 10,
+        type: 'Player'
+      }));
+    }
+
+    // CRITICAL CHANGE: We only update the INTERNAL combatants state here.
+    // We DO NOT call onUpdateParty() inside this function.
+    return prev.map(c => {
+      if (c.type === 'Player') {
+        const playerId = c.id.replace('pc-', '');
+        const masterData = currentParty.find((p: any) => p.id.toString() === playerId);
+        if (masterData && (masterData.currentHp !== c.hp || masterData.ac !== c.ac)) {
+          return { ...c, hp: masterData.currentHp, ac: masterData.ac };
+        }
+      }
+      return c;
+    });
+  });
+};
+
+  useEffect(() => {
+    const syncFromVault = () => {
     if (syncLock.current) return;
     const campaignName = localStorage.getItem('aegis_campaign_name') || "New Saga";
     const savedParty = localStorage.getItem(`aegis_party_${campaignName}`);
     if (!savedParty) return;
-    const party = JSON.parse(savedParty);
+    const currentParty = JSON.parse(savedParty);
 
     setCombatants(prev => {
+      // If tracker is empty, fill it with the party
       if (prev.length === 0) {
-        return party.map((p: any) => ({
+        return currentParty.map((p: any) => ({
           id: `pc-${p.id}`,
           name: p.name,
           init: 0,
@@ -51,10 +96,12 @@ const toggleStatus = (id: any, conditionName: string) => {
           type: 'Player'
         }));
       }
+
+      // Check if we need to sync health values from the master list
       return prev.map(c => {
         if (c.type === 'Player') {
           const playerId = c.id.replace('pc-', '');
-          const masterData = party.find((p: any) => p.id.toString() === playerId);
+          const masterData = currentParty.find((p: any) => p.id.toString() === playerId);
           if (masterData && (masterData.currentHp !== c.hp || masterData.ac !== c.ac)) {
             return { ...c, hp: masterData.currentHp, ac: masterData.ac };
           }
@@ -63,8 +110,6 @@ const toggleStatus = (id: any, conditionName: string) => {
       });
     });
   };
-
-  useEffect(() => {
     syncFromVault();
     window.addEventListener('party-updated', syncFromVault);
     window.addEventListener('campaign-updated', () => { setCombatants([]); syncFromVault(); });
@@ -83,19 +128,11 @@ const toggleStatus = (id: any, conditionName: string) => {
       const newHp = (parseInt(target.hp) || 0) + amount;
 
       if (target.type === 'Player') {
-        const campaignName = localStorage.getItem('aegis_campaign_name') || "New Saga";
-        const savedParty = localStorage.getItem(`aegis_party_${campaignName}`);
-        if (savedParty) {
-          const partyData = JSON.parse(savedParty);
-          const updatedMasterParty = partyData.map((p: any) => 
-            p.id.toString() === id.replace('pc-', '') ? { ...p, currentHp: newHp } : p
-          );
-          localStorage.setItem(`aegis_party_${campaignName}`, JSON.stringify(updatedMasterParty));
-          
-          requestAnimationFrame(() => {
-            window.dispatchEvent(new Event('party-updated'));
-          });
-        }
+        const updatedMasterParty = party.map((p: any) => 
+          p.id.toString() === id.replace('pc-', '') ? { ...p, currentHp: newHp } : p
+        );
+        // Call the prop function to update everything
+        onUpdateParty(updatedMasterParty);
       }
       return prev.map(c => c.id === id ? { ...c, hp: newHp } : c);
     });
@@ -135,35 +172,26 @@ const toggleStatus = (id: any, conditionName: string) => {
       setTurn(0);
     }
   };
+
   useEffect(() => {
-  const handleExternalAdd = (e: any) => {
-    const monster = e.detail;
-    
-    // We format the API data to match your combatant structure
-    const newMonster = {
-      id: `api-${monster.index}-${Date.now()}`, // Unique ID
-      name: monster.name,
-      init: 0,
-      // API uses 'hit_points', your tracker uses 'hp'
-      hp: monster.hit_points || 10, 
-      // API uses 'armor_class', usually an array or number
-      ac: Array.isArray(monster.armor_class) ? monster.armor_class[0].value : (monster.armor_class || 10),
-      dex: monster.dexterity || 10,
-      type: 'Monster'
+    const handleExternalAdd = (e: any) => {
+      const monster = e.detail;
+      const newMonster = {
+        id: `api-${monster.index}-${Date.now()}`,
+        name: monster.name,
+        init: 0,
+        hp: monster.hit_points || 10, 
+        ac: Array.isArray(monster.armor_class) ? monster.armor_class[0].value : (monster.armor_class || 10),
+        dex: monster.dexterity || 10,
+        type: 'Monster'
+      };
+      setCombatants(prev => [...prev, newMonster]);
     };
-
-    setCombatants(prev => [...prev, newMonster]);
-  };
-
-  // Listen for that specific "Add to Combat" button click
-  window.addEventListener('add-to-combat', handleExternalAdd);
-  
-  return () => window.removeEventListener('add-to-combat', handleExternalAdd);
-}, []);
+    window.addEventListener('add-to-combat', handleExternalAdd);
+    return () => window.removeEventListener('add-to-combat', handleExternalAdd);
+  }, []);
 
   const sortedList = [...combatants].sort((a, b) => b.init - a.init || b.dex - a.dex);
-  
-  // Turn Logic Helpers
   const currentActor = sortedList[turn];
   const nextActor = sortedList[(turn + 1) % (sortedList.length || 1)];
 
@@ -205,7 +233,6 @@ const toggleStatus = (id: any, conditionName: string) => {
           Next Turn
         </button>
 
-        {/* RESTORED: Acting/On Deck Callout */}
         {sortedList.length > 0 && (
           <div className="flex justify-between items-center px-3 py-2 bg-stone-950/60 border border-amber-900/10 rounded-lg shadow-inner">
             <div className="flex flex-col">
@@ -230,69 +257,70 @@ const toggleStatus = (id: any, conditionName: string) => {
           <div key={c.id} className={`p-3 rounded-lg border transition-all ${turn === idx ? 'bg-amber-950/30 border-amber-600 ring-1 ring-amber-600 shadow-[0_0_15px_rgba(217,119,6,0.1)]' : 'bg-stone-950/40 border-stone-800'}`}>
             <div className="flex items-center gap-3">
               <input 
-          type="number"
-          value={c.init}
-          onChange={(e) => {
-            const val = parseInt(e.target.value) || 0;
-            setCombatants(prev => prev.map(item => 
-              item.id === c.id ? { ...item, init: val } : item
-            ));
-          }}
-          className="w-10 bg-transparent text-center text-amber-500 font-mono text-xl font-bold outline-none focus:bg-amber-900/20 rounded transition-colors"
-        />  
-{/* 2. THE NAME & STATUS BLOCK */}
-<div className="flex-1 min-w-0"> {/* min-w-0 prevents text overflow */}
-  <div className="flex items-center gap-2 mb-1">
-    <div className={`text-sm md:text-md font-serif truncate ${c.type === 'Player' ? 'text-amber-100' : 'text-rose-400'}`}>
-      {c.name}
-    </div>
-    
-    {/* Status Badges - Now with a bit of margin */}
-    <div className="flex gap-1 flex-wrap">
-      {c.statuses?.map((statusName: string) => {
-        const config = CONDITIONS.find(con => con.name === statusName);
-        return (
-          <span 
-            key={statusName} 
-            title={statusName} 
-            className={`text-[9px] px-1.5 py-0.5 rounded-sm ${config?.color} text-white font-bold animate-in zoom-in-50`}
-          >
-            {config?.icon}
-          </span>
-        );
-      })}
-    </div>
-  </div>
+                type="number"
+                value={c.init}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 0;
+                  setCombatants(prev => prev.map(item => 
+                    item.id === c.id ? { ...item, init: val } : item
+                  ));
+                }}
+                className="w-10 bg-transparent text-center text-amber-500 font-mono text-xl font-bold outline-none focus:bg-amber-900/20 rounded transition-colors"
+              />  
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  {/* RESTORED: Label Badges */}
+                  <span className={`text-[8px] px-1 rounded font-bold uppercase ${
+                    c.type === 'Player' ? 'bg-sky-900 text-sky-200' : 'bg-rose-900 text-rose-200'
+                  }`}>
+                    {c.type}
+                  </span>
+                  
+                  <div className={`text-sm md:text-md font-serif truncate ${c.type === 'Player' ? 'text-amber-100' : 'text-rose-400'}`}>
+                    {c.name}
+                  </div>
+                  
+                  <div className="flex gap-1 flex-wrap">
+                    {c.statuses?.map((statusName: string) => {
+                      const config = CONDITIONS.find(con => con.name === statusName);
+                      return (
+                        <span key={statusName} title={statusName} className={`text-[9px] px-1.5 py-0.5 rounded-sm ${config?.color} text-white font-bold`}>
+                          {config?.icon}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
 
-  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-    <div className="text-[10px] text-stone-500 font-bold uppercase flex gap-2">
-      <span>AC {c.ac}</span> 
-      <span>DEX {c.dex}</span>
-    </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <div className="text-[14px] text-stone-500 font-bold uppercase flex gap-2">
+                    <span>AC {c.ac}</span> 
+                    <span>DEX {c.dex}</span>
+                  </div>
 
-    {/* The Dropdown - Styled to look like a small "Tag" */}
-    <select 
-      className="bg-stone-800/50 text-amber-600/80 border border-amber-900/20 rounded px-1 h-5 text-[9px] uppercase font-bold cursor-pointer hover:bg-stone-800 hover:text-amber-500 transition-all outline-none"
-      onChange={(e) => {
-        if (e.target.value) toggleStatus(c.id, e.target.value);
-        e.target.value = ""; 
-      }}
-    >
-      <option value="" className="text-stone-500">+ Effect</option>
-      {CONDITIONS.map(con => (
-        <option key={con.name} value={con.name} className="bg-stone-900 text-amber-500">
-          {con.icon} {con.name}
-        </option>
-      ))}
-    </select>
-  </div>
-</div>
-              <div className="flex items-center gap-2 bg-stone-900 rounded px-2 py-1 border border-stone-800 shadow-inner">
-                <button onClick={() => adjustHp(c.id, -1)} className="text-stone-500 hover:text-rose-500 px-1 transition-colors">-</button>
-                <span className="text-sm font-mono font-bold w-4 text-center text-stone-200">{c.hp}</span>
-                <button onClick={() => adjustHp(c.id, 1)} className="text-stone-500 hover:text-emerald-500 px-1 transition-colors">+</button>
+                  <select 
+                    className="bg-black -800/50 text-amber-600/80 border border-amber-900/20 rounded px-1 h-5 text-[12px] uppercase font-bold outline-none"
+                    onChange={(e) => {
+                      if (e.target.value) toggleStatus(c.id, e.target.value);
+                      e.target.value = ""; 
+                    }}
+                  >
+                    <option value="">+ Effect</option>
+                    {CONDITIONS.map(con => (
+                      <option key={con.name} value={con.name}>{con.icon} {con.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <button onClick={() => setCombatants(prev => prev.filter(item => item.id !== c.id))} className="text-stone-700 hover:text-rose-900 ml-1 transition-colors">
+              
+              <div className="flex items-center gap-2 bg-stone-900 rounded px-2 py-1 border border-stone-800 shadow-inner">
+                <button onClick={() => adjustHp(c.id, -1)} className="text-stone-500 hover:text-rose-500 px-1">-</button>
+                <span className="text-sm font-mono font-bold w-4 text-center text-stone-200">{c.hp}</span>
+                <button onClick={() => adjustHp(c.id, 1)} className="text-stone-500 hover:text-emerald-500 px-1">+</button>
+              </div>
+              
+              <button onClick={() => setCombatants(prev => prev.filter(item => item.id !== c.id))} className="text-stone-700 hover:text-rose-900 ml-1">
                 <Trash2 size={14} />
               </button>
             </div>
@@ -301,6 +329,4 @@ const toggleStatus = (id: any, conditionName: string) => {
       </div>
     </div>
   );
-};
-
-export default CombatTracker;
+}
