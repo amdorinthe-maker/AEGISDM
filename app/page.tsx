@@ -173,34 +173,35 @@ const [party, setParty] = useState<any[]>([]);
     <div className="min-h-screen bg-stone-950 text-stone-200 font-sans">
 
       {/* GLOBAL HEADER */}
+{/* GLOBAL HEADER */}
 <header className="border-b border-amber-900/30 bg-stone-900/50 p-4 shadow-xl">
-  <div className="max-w-[1800px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+  <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row items-center gap-4">
     
-    {/* LEFT SIDE: Title */}
-    <div className="flex items-center gap-2 overflow-hidden">
-      <Shield className="text-amber-600 flex-shrink-0" />
-      <h1 className="text-xl font-bold text-amber-500 tracking-tighter truncate">
-        AEGIS DM
+    {/* Title Area - Stays left on desktop, centered on mobile */}
+    <div className="flex-1 w-full flex justify-center md:justify-start">
+      <h1 className="text-xl font-bold text-amber-500 tracking-tighter flex items-center gap-2">
+        <Shield className="text-amber-600" /> AEGIS DM
       </h1>
     </div>
-
-    {/* RIGHT SIDE: Controls (Buttons) */}
-    <div className="flex items-center justify-start md:justify-end gap-2 md:gap-4 overflow-x-auto pb-1 md:pb-0 custom-scrollbar">
+    
+    {/* Button Area - Stays centered/spaced on mobile */}
+    <div className="flex items-center gap-3 w-full justify-center md:w-auto md:justify-end">
+      
       <button 
         onClick={() => setIsCompendiumOpen(true)}
-        className="flex items-center gap-2 px-3 py-2 bg-stone-900 border border-amber-900/40 rounded text-amber-600 hover:border-amber-600 transition-all text-[10px] uppercase font-bold tracking-widest whitespace-nowrap"
+        className="px-3 py-2 bg-stone-900 border border-amber-900/40 rounded text-amber-600 text-[10px] uppercase font-bold tracking-widest hover:border-amber-600 transition-all"
       >
-        📜 <span className="hidden sm:inline">Compendium</span>
+        📜 Compendium
       </button>
 
       <button 
         onClick={exportFullCampaign} 
-        className="flex items-center gap-2 px-3 py-2 bg-amber-900/20 border border-amber-900/40 rounded text-amber-600 hover:bg-amber-900/40 transition-all text-[10px] uppercase font-bold tracking-widest whitespace-nowrap"
+        className="px-3 py-2 bg-amber-900/20 border border-amber-900/40 rounded text-amber-600 text-[10px] uppercase font-bold tracking-widest hover:bg-amber-900/40 transition-all"
       >
         Export
       </button>
 
-      <div className="hidden sm:block text-[10px] text-stone-500 uppercase tracking-widest font-bold whitespace-nowrap">
+      <div className="hidden lg:block text-[10px] text-stone-500 uppercase tracking-widest font-bold ml-2">
         Vault Active
       </div>
     </div>
