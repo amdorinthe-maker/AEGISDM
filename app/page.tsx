@@ -174,31 +174,33 @@ const [party, setParty] = useState<any[]>([]);
 
       {/* GLOBAL HEADER */}
 <header className="border-b border-amber-900/30 bg-stone-900/50 p-4 shadow-xl">
-  {/* Added flex-wrap here to let items drop to a new line on small screens */}
-  <div className="max-w-[1800px] mx-auto flex flex-wrap justify-between items-center gap-4">
+  <div className="max-w-[1800px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
     
-    <h1 className="text-xl md:text-2xl font-bold text-amber-500 tracking-tighter flex items-center gap-2">
-      <Shield className="text-amber-600 hidden md:block" /> AEGIS DM
-    </h1>
-    
-    <div className="flex flex-wrap items-center gap-2 md:gap-6">
-      
+    {/* LEFT SIDE: Title */}
+    <div className="flex items-center gap-2 overflow-hidden">
+      <Shield className="text-amber-600 flex-shrink-0" />
+      <h1 className="text-xl font-bold text-amber-500 tracking-tighter truncate">
+        AEGIS DM
+      </h1>
+    </div>
+
+    {/* RIGHT SIDE: Controls (Buttons) */}
+    <div className="flex items-center justify-start md:justify-end gap-2 md:gap-4 overflow-x-auto pb-1 md:pb-0 custom-scrollbar">
       <button 
         onClick={() => setIsCompendiumOpen(true)}
-        className="flex items-center gap-2 px-3 py-1 bg-stone-900 border border-amber-900/40 rounded text-amber-600 transition-all text-[9px] md:text-[10px] uppercase font-bold tracking-widest hover:border-amber-600"
+        className="flex items-center gap-2 px-3 py-2 bg-stone-900 border border-amber-900/40 rounded text-amber-600 hover:border-amber-600 transition-all text-[10px] uppercase font-bold tracking-widest whitespace-nowrap"
       >
         📜 <span className="hidden sm:inline">Compendium</span>
       </button>
 
       <button 
         onClick={exportFullCampaign} 
-        className="flex items-center gap-2 px-3 py-1 bg-amber-900/20 border border-amber-900/40 rounded text-amber-600 transition-all text-[9px] md:text-[10px] uppercase font-bold tracking-widest hover:bg-amber-900/40"
+        className="flex items-center gap-2 px-3 py-2 bg-amber-900/20 border border-amber-900/40 rounded text-amber-600 hover:bg-amber-900/40 transition-all text-[10px] uppercase font-bold tracking-widest whitespace-nowrap"
       >
         Export
       </button>
 
-      {/* Hide this status text on very small screens to save space */}
-      <div className="hidden sm:block text-[9px] md:text-xs text-stone-500 uppercase tracking-widest font-bold">
+      <div className="hidden sm:block text-[10px] text-stone-500 uppercase tracking-widest font-bold whitespace-nowrap">
         Vault Active
       </div>
     </div>
