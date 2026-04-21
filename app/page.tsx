@@ -173,31 +173,46 @@ const [party, setParty] = useState<any[]>([]);
     <div className="min-h-screen bg-stone-950 text-stone-200 font-sans">
 
       {/* GLOBAL HEADER */}
-      <header className="border-b border-amber-900/30 bg-stone-900/50 p-4 shadow-xl">
-        <div className="max-w-[1800px] mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-amber-500 tracking-tighter flex items-center gap-2">
-
-            <Shield className="text-amber-600" /> AEGIS DM ASSISTANT
-          </h1>
-          <div className="flex items-center gap-6">
+<header className="border-b border-amber-900/30 bg-stone-900/50 p-3 md:p-4 shadow-xl">
+  <div className="max-w-[1800px] mx-auto flex justify-between items-center">
+    
+    {/* TITLE: Shrinks on mobile */}
+    <h1 className="text-lg md:text-2xl font-bold text-amber-500 tracking-tighter flex items-center gap-2">
+      <Shield className="text-amber-600 w-5 h-5 md:w-6 md:h-6" /> 
+      <span>AEGIS <span className="hidden sm:inline">DM</span></span>
+    </h1>
+    
+    {/* BUTTONS: Swaps text for icons on small screens */}
+    <div className="flex items-center gap-2 md:gap-4">
+      
+      {/* COMPENDIUM BUTTON */}
       <button 
-        onClick={exportFullCampaign} // <--- This "reads" the function!
-        className="flex items-center gap-2 px-3 py-1 bg-amber-900/20 border border-amber-900/40 rounded text-amber-600 hover:bg-amber-900/40 transition-all text-[10px] uppercase font-bold tracking-widest"
+        onClick={() => setIsCompendiumOpen(true)}
+        className="flex items-center gap-2 px-3 py-2 md:py-1 bg-stone-900 border border-amber-900/40 rounded text-amber-600 hover:border-amber-600 transition-all uppercase font-bold tracking-widest text-[10px]"
+        title="Open Compendium"
       >
-        Export Full Saga
+        <span>📜</span>
+        <span className="hidden md:block">Compendium</span>
       </button>
+
+      {/* EXPORT BUTTON */}
       <button 
-  onClick={() => setIsCompendiumOpen(true)}
-  className="p-2 text-amber-600 hover:text-amber-400 transition-colors flex items-center gap-2"
->
-  <span className="text-xl">📜</span> <span className="text-xs font-serif uppercase tracking-widest">Compendium</span>
-</button>
-          <div className="text-xs text-stone-500 uppercase tracking-widest font-bold">
-            Vault Protocol Active
-          </div>
-        </div>
-         </div> 
-      </header>
+        onClick={exportFullCampaign} 
+        className="flex items-center gap-2 px-3 py-2 md:py-1 bg-amber-900/20 border border-amber-900/40 rounded text-amber-600 hover:bg-amber-900/40 transition-all uppercase font-bold tracking-widest text-[10px]"
+        title="Export Saga"
+      >
+        <span>💾</span>
+        <span className="hidden md:block">Export</span>
+      </button>
+
+      {/* STATUS: Only visible on large screens */}
+      <div className="hidden lg:flex items-center gap-2 text-[10px] text-stone-500 uppercase tracking-widest font-bold border-l border-stone-800 pl-4 ml-2">
+        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+        Vault Active
+      </div>
+    </div>
+  </div> 
+</header>
 
       {/* MAIN DASHBOARD */}
       <main className="max-w-[1800px] mx-auto p-6 space-y-6">
