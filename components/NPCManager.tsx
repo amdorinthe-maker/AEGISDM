@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { UserPlus, Sparkles, Trash2, Edit3, User, Loader2 } from 'lucide-react';
 import { generateAIGent, generateNPCPortrait } from '@/app/actions';
+import NPCCard from './NPCCard';
 
-const NPCManager = ({ npcs = [], onDelete, onEdit, npcToEdit, onStartEdit }: any) => {
+const NPCManager = ({ npcs = [], onDelete, onEdit, npcToEdit, onStartEdit, onToggleStatus }: any) => {
   const [mode, setMode] = useState<'view' | 'manual'>('view');
   const [manualNPC, setManualNPC] = useState({ name: '', role: '', race: '', description: '', id: '', image: '' });
   const [isGenerating, setIsGenerating] = useState(false);
@@ -158,30 +159,30 @@ const NPCManager = ({ npcs = [], onDelete, onEdit, npcToEdit, onStartEdit }: any
           </button>
         </form>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-          {npcs.length > 0 ? npcs.map((npc: any) => (
-             <div key={npc.id} className="bg-stone-900/80 border border-amber-900/30 rounded-lg p-4 group hover:border-amber-500/50 transition-all">
-               <div className="flex justify-between items-start">
-                 <div className="w-12 h-12 rounded bg-stone-800 overflow-hidden border border-stone-700">
-                    <img src={npc.image} alt={npc.name} className="w-full h-full object-cover" />
-                 </div>
-                 <div className="flex-1 ml-3">
-                    <h3 className="text-amber-500 font-serif text-lg font-bold leading-tight">{npc.name}</h3>
-                    <p className="text-[10px] text-stone-400 uppercase tracking-tighter">{npc.race} {npc.role}</p>
-                 </div>
-                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => onStartEdit(npc)} className="text-stone-500 hover:text-amber-500"><Edit3 size={14}/></button>
-                    <button onClick={() => onDelete(npc.id)} className="text-stone-500 hover:text-rose-500"><Trash2 size={14}/></button>
-                 </div>
-               </div>
-               <p className="text-stone-300 text-sm italic border-t border-amber-900/10 mt-2 pt-2 line-clamp-3">{npc.description}</p>
-             </div>
-          )) : (
-            <div className="col-span-2 py-10 text-center text-stone-600 italic text-sm border-2 border-dashed border-stone-800 rounded-xl">
-                No NPCs found in {campaignName}. Use Quick Gen to populate the town.
-            </div>
-          )}
-        </div>
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+  {npcs.length > 0 ? (
+    npcs.map((npc: any) => (
+      <NPCCard 
+        key={npc.id} 
+        npc={{
+          ...npc,
+          // Mapping your existing 'description' to the 'lore' field the card expects
+          lore: npc.description, 
+          image: npc.image,
+          // If your AI generated tags aren't a string yet, we default to an empty string
+          appearance_tags: npc.appearance_tags || "" 
+        }} 
+        onDelete={onDelete} 
+        onToggleStatus={onToggleStatus}
+      />
+    ))
+    
+  ) : (
+    <div className="col-span-2 py-10 text-center text-stone-600 italic text-sm border-2 border-dashed border-stone-800 rounded-xl">
+      No NPCs found in {campaignName}. Use Quick Gen to populate the town.
+    </div>
+  )}
+</div>
       )}
     </div>
   );

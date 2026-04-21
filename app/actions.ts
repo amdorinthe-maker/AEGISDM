@@ -9,6 +9,8 @@ export async function generateAIGent(type: 'encounter' | 'loot' | 'npc', context
     const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview",
         generationConfig : {
             responseMimeType: "application/json",
+            temperature: 0.9, // Higher = more random/creative
+    topP: 0.95,
         }
      });
     let prompt = "";
@@ -17,11 +19,19 @@ if (type === 'npc') {
       // Check if we want a structured object (for the Manager) or a story (for the Hub)
       const isManagerCall = context.includes("DATA_ONLY");
       
-      if (isManagerCall) {
-        prompt = `Generate a D&D 5e NPC for a ${context.replace("DATA_ONLY", "")} setting. 
-        Return ONLY a JSON object with these keys: "name", "race", "role", "lore", "appearance_tags".
-        appearance_tags should be 3-4 keywords like 'scarred', 'hooded', 'noble', 'bearded'.
-        Lore should be 2 sentences and include a secret.`;
+if (isManagerCall) {
+  prompt = `Generate a unique, memorable D&D 5e NPC for a ${context.replace("DATA_ONLY", "")} setting. 
+  
+  CRITICAL RULES FOR VARIETY:
+  - Do NOT generate common tropes (no generic innkeepers or shopkeeps).
+  - Use a wide mix of Norse/Saxon/Celtic names (e.g., Bjorn, Aethelgard, Sigrid, Thrain).
+  - Randomize the Race significantly (Dwarf, Half-Orc, Tiefling, Human, Elf).
+  - Give them a specific, weird personality trait (e.g., talks to birds, obsessed with gold coins, extremely paranoid).
+  
+  Return ONLY a JSON object: {"name", "race", "role", "lore", "appearance_tags"}.
+  appearance_tags: 3-4 keywords describing physical unique features.
+  Lore: 2 sentences including a secret motivation or a past failure.`;
+
       } else {
         prompt = `You are an expert DM. Generate a unique D&D 5e NPC for a ${context} setting. 
         Structure the response as follows:

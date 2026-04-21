@@ -117,6 +117,15 @@ useEffect(() => {
   const handleNpcDelete = (id: string) => {
     handleNpcChange(npcs.filter(n => n.id !== id));
   };
+const handleToggleStatus = (id: string) => {
+  const updatedNpcs = npcs.map((npc: any) => 
+    npc.id === id ? { ...npc, status: npc.status === 'dead' ? 'alive' : 'dead' } : npc
+  );
+  setNpcs(updatedNpcs);
+  // This helper function handles the LocalStorage saving for you
+  handleNpcChange(updatedNpcs);
+};
+
 
 
   // --- LOCATION HANDLERS ---
@@ -283,6 +292,7 @@ const [party, setParty] = useState<any[]>([]);
                   onEdit={handleAddOrEditNPC}
                   onDelete={handleNpcDelete}
                   onStartEdit={(npc: any) => setNpcToEdit(npc)}
+                  onToggleStatus={handleToggleStatus}
                 />
               )}
 
