@@ -455,6 +455,8 @@ function AddLocationModal({ isOpen, onClose, onSave, editData }: any) {
     </div>
     
   );
+
+}
   <footer className="mt-12 pb-8 text-center border-t border-stone-800/50 pt-8">
   <div className="text-[10px] uppercase tracking-[0.2em] text-stone-600 font-bold mb-2">
     AEGIS v1.0 • System Status: Operational
@@ -464,4 +466,3 @@ function AddLocationModal({ isOpen, onClose, onSave, editData }: any) {
     Crafted with React & Next.js. Logic & Lore summoned via Gemini AI.
   </p>
 </footer>
-}
