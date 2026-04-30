@@ -55,22 +55,7 @@ const CampaignHeader = ({ onOpenLibrary }: { onOpenLibrary: () => void }) => {
           </div>
 
           <div className="flex gap-2 md:gap-4">
-            <button 
-              onClick={exportFullCampaign}
-              className="flex items-center gap-2 text-amber-500/60 hover:text-amber-400 text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-bold transition-colors bg-amber-900/10 px-3 py-1.5 rounded border border-amber-900/20"
-            >
-              <Save size={12} />
-              <span className="hidden sm:inline">Archive Saga</span>
-              <span className="sm:hidden">Archive</span>
-            </button>
-            <button 
-              onClick={onOpenLibrary}
-              className="flex items-center gap-2 text-amber-500/60 hover:text-amber-400 text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-bold transition-colors bg-amber-900/10 px-3 py-1.5 rounded border border-amber-900/20"
-            >
-              <Download size={12} />
-              <span className="hidden sm:inline">Load Saga</span>
-              <span className="sm:hidden">Load</span>
-            </button>
+
           </div>
         </div>
 

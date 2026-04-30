@@ -188,4 +188,5 @@ const NPCManager = ({ npcs = [], onDelete, onEdit, npcToEdit, onStartEdit, onTog
   );
 };
 
+
 export default NPCManager;
