@@ -83,7 +83,7 @@ const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
       
       event.target.value = ""; 
     } catch (err) {
-      alert("Error importing. Make sure it's a valid AEGIS or Trello JSON.");
+      alert("Error importing. Make sure it's a valid Cipher or Trello JSON.");
     }
   };
   reader.readAsText(file);

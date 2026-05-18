@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AEGIS DM Assistant", 
+  title: "DM's Cipher", 
   description: "A minimal, AI-powered vault for Norse-themed TTRPG sagas.",
 };
 

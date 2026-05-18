@@ -188,7 +188,7 @@ const [party, setParty] = useState<any[]>([]);
     {/* TITLE: Shrinks on mobile */}
     <h1 className="text-lg md:text-2xl font-bold text-amber-500 tracking-tighter flex items-center gap-2">
       <Shield className="text-amber-600 w-5 h-5 md:w-6 md:h-6" /> 
-      <span>AEGIS <span className="hidden sm:inline">DM</span></span>
+      <span>DM's<span className="hidden sm:inline"> Cipher</span></span>
     </h1>
     
     {/* BUTTONS: Swaps text for icons on small screens */}
@@ -297,7 +297,7 @@ const [party, setParty] = useState<any[]>([]);
               )}
 <footer className="mt-12 pb-8 text-center border-t border-stone-800/50 pt-8">
   <div className="text-[10px] uppercase tracking-[0.2em] text-stone-600 font-bold mb-2">
-    AEGIS v1.0 • System Status: Operational
+    Cipher v1.0 • System Status: Operational
   </div>
   <p className="text-[11px] text-stone-500 max-w-md mx-auto leading-relaxed">
     A collaborative project curated by Matthew Brown. 
